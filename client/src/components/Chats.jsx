@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from "react";
-import "../App.css";
+import notification from "../assets/notification.mp3"
 import ScrollToBottom from "react-scroll-to-bottom";
+import "../App.css";
 
 const Chats = ({ socket, username, room }) => {
   const [currentMessage, setCurrentMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
+  const play = () => {
+    new Audio(notification).play()
+  }
+
   const sendMessage = async () => {
     if (currentMessage !== "") {
       const messageData = {
-        id: new Date().getTime() ,
+        id: new Date().getTime(),
         room: room,
         author: username,
         message: currentMessage,
@@ -27,9 +32,13 @@ const Chats = ({ socket, username, room }) => {
 
   useEffect(() => {
     socket.on("receive_message", (data) => {
-      setMessages((list) => [...list, data]);
+      console.log(data);
+      if (data.author !== username) {
+        setMessages((list) => [...list, data]);
+        play()
+      }
     });
-  }, [socket]);
+  }, [socket, username]);
 
   return (
     <div className="chat-window">
@@ -37,25 +46,24 @@ const Chats = ({ socket, username, room }) => {
         <p>Live Chat</p>
       </div>
       <div className="chat-body">
-        <ScrollToBottom className="message-container" >
-
-        {messages.map((messageContent) => {
-            return <div
-            key={messageContent.id}
-          className="message"
-          id={username === messageContent.author ? "you" : "other"}
-        >
-          <div>
-            <div className="message-content">
-              <p>{messageContent.message}</p>
+        <ScrollToBottom className="message-container">
+          {messages.map((messageContent) => (
+            <div
+              key={messageContent.id}
+              className="message"
+              id={username !== messageContent.author ? "other" : "you"}
+            >
+              <div>
+                <div className="message-content">
+                  <p className="px-1.5">{messageContent.message}</p>
+                </div>
+                <div className="message-meta">
+                  <p id="time">{messageContent.time}</p>
+                  <p id="author">{messageContent.author}</p>
+                </div>
+              </div>
             </div>
-            <div className="message-meta">
-              <p id="time">{messageContent.time}</p>
-              <p id="author">{messageContent.author}</p>
-            </div>
-          </div>
-        </div>
-        })}
+          ))}
         </ScrollToBottom>
       </div>
       <div className="chat-footer">
